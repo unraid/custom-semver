@@ -1,17 +1,17 @@
 import { compare as semverCompare, parse, valid as semverValid } from "semver";
 
-// Magic string constant for patch build tags
-const PATCH_IDENTIFIER = "patch";
+// Magic string constants for patch build tags
+const PATCH_IDENTIFIERS = ["patch", "hotfix"];
 
 /**
  * Custom semver comparison that handles build tags in a special way.
  *
  * Normal semver comparison is performed first. If versions are equal, then build tags are compared.
- * If at least one version has a build tag containing "patch", custom comparison is used:
+ * If at least one version has a build tag containing "patch" or "hotfix", custom comparison is used:
  * - Build tags are normalized by adding zeros until they have at least 3 parts (like 1.0.0) for proper comparison.
- * - A version with a patch build tag is considered greater than a version without a build tag.
+ * - A version with a patch/hotfix build tag is considered greater than a version without a build tag.
  *
- * If neither version has a build tag containing "patch", standard semver comparison is used.
+ * If neither version has a build tag containing a patch identifier, standard semver comparison is used.
  *
  * Example:
  * - 7.0.0+patch.1 vs 7.0.0+patch.10
@@ -24,7 +24,7 @@ const PATCH_IDENTIFIER = "patch";
  *
  * - 7.0.0 vs 7.0.0+build.1
  *   First, normal semver comparison: 7.0.0 = 7.0.0
- *   Then, since neither has a build tag containing "patch", standard semver comparison is used
+ *   Then, since neither has a build tag containing a patch identifier, standard semver comparison is used
  *
  * @param version1 First version to compare
  * @param version2 Second version to compare
@@ -55,9 +55,9 @@ export function customSemverCompare(
   const buildTag1 = parsed1.build.length ? parsed1.build.join(".") : "";
   const buildTag2 = parsed2.build.length ? parsed2.build.join(".") : "";
 
-  // Check if either build tag contains "patch"
-  const hasPatch1 = buildTag1.includes(PATCH_IDENTIFIER);
-  const hasPatch2 = buildTag2.includes(PATCH_IDENTIFIER);
+  // Check if either build tag contains a patch identifier
+  const hasPatch1 = PATCH_IDENTIFIERS.some(identifier => buildTag1.includes(identifier));
+  const hasPatch2 = PATCH_IDENTIFIERS.some(identifier => buildTag2.includes(identifier));
 
   // If neither has a patch build tag, use standard semver comparison
   if (!hasPatch1 && !hasPatch2) {
@@ -77,16 +77,41 @@ export function customSemverCompare(
     return 0;
   }
 
-  // Check if both build tags start with "patch."
-  const patchRegex = new RegExp(`^${PATCH_IDENTIFIER}\\.(\\d+(?:\\.\\d+)*)$`);
-  const matchesA = patchRegex.exec(buildTag1);
-  const matchesB = patchRegex.exec(buildTag2);
-
-  // If both have the patch. prefix, compare them specially
-  if (matchesA && matchesB) {
-    // Extract the version numbers after "patch."
-    const patchVersionA = matchesA[1] || "";
-    const patchVersionB = matchesB[1] || "";
+  // Check if build tags start with any of the patch identifiers
+  const isPatch1 = PATCH_IDENTIFIERS.some(id => buildTag1.startsWith(`${id}.`));
+  const isPatch2 = PATCH_IDENTIFIERS.some(id => buildTag2.startsWith(`${id}.`));
+  
+  // Get the identifier part if it exists
+  const getIdentifier = (buildTag: string): string | null => {
+    for (const id of PATCH_IDENTIFIERS) {
+      if (buildTag.startsWith(`${id}.`)) {
+        return id;
+      }
+    }
+    return null;
+  };
+  
+  // Get the version part after the identifier if it exists
+  const getVersionPart = (buildTag: string, identifier: string): string => {
+    if (buildTag.startsWith(`${identifier}.`)) {
+      return buildTag.substring(identifier.length + 1);
+    }
+    return "";
+  };
+  
+  // If both tags start with patch identifiers
+  if (isPatch1 && isPatch2) {
+    const id1 = getIdentifier(buildTag1);
+    const id2 = getIdentifier(buildTag2);
+    
+    // If different identifiers, compare them lexicographically
+    if (id1 !== id2) {
+      return id1!.localeCompare(id2!);
+    }
+    
+    // We know id1 is not null because isPatch1 is true
+    const patchVersionA = getVersionPart(buildTag1, id1!);
+    const patchVersionB = getVersionPart(buildTag2, id2!);
 
     // Normalize version numbers by adding trailing zeros if needed
     // Count the number of parts in each version
@@ -108,11 +133,11 @@ export function customSemverCompare(
     return semverCompare(normalizedA, normalizedB);
   }
 
-  // If only one has the patch. prefix, prioritize it
-  if (matchesA && !matchesB) {
+  // If only one starts with a patch identifier, prioritize it
+  if (isPatch1 && !isPatch2) {
     return 1; // version1 is greater
   }
-  if (!matchesA && matchesB) {
+  if (!isPatch1 && isPatch2) {
     return -1; // version2 is greater
   }
 
