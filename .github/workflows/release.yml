@@ -75,6 +75,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: unraid/custom-semver
+
       - name: Send Discord notification
         if: ${{ needs.release-please.outputs.release_created }}
         uses: Ilshidur/action-discord@0.3.2
