@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/unraid/custom-semver/compare/v1.1.0...v1.2.0) (2025-05-05)
+
+
+### Features
+
+* add hotfix as supported tag keyword ([#9](https://github.com/unraid/custom-semver/issues/9)) ([04a1388](https://github.com/unraid/custom-semver/commit/04a138829a583945fa0a7fe481d19bd5c4909077))
+
 ## [1.1.0](https://github.com/unraid/custom-semver/compare/v1.0.2...v1.1.0) (2025-05-05)
 
 
