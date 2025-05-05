@@ -1,6 +1,6 @@
 {
   "name": "custom-semver",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/semver": "^7.5.7",
     "rimraf": "^6.0.0",
-    "@vitest/coverage-v8": "^1.2.1", 
+    "@vitest/coverage-v8": "^1.2.1",
     "typescript": "^5.3.3",
     "vitest": "^1.2.1",
     "semver": "^7.5.4"
