@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/unraid/custom-semver/compare/v1.0.2...v1.1.0) (2025-05-05)
+
+
+### Features
+
+* dual-build support ([08d32cc](https://github.com/unraid/custom-semver/commit/08d32cca486627cdbd344a5184869d6bb141d002))
+
 ## [1.0.2](https://github.com/unraid/custom-semver/compare/v1.0.1...v1.0.2) (2025-05-05)
 
 
