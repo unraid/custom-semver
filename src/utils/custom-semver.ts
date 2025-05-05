@@ -4,6 +4,39 @@ import { compare as semverCompare, parse, valid as semverValid } from "semver";
 const PATCH_IDENTIFIERS = ["patch", "hotfix"];
 
 /**
+ * Creates regex patterns for patch identifiers that ensure they are matched only
+ * when properly delimited by dots or string boundaries.
+ * 
+ * @param identifier The patch identifier to create a pattern for
+ * @returns A RegExp that matches the identifier only when properly delimited
+ */
+function createPatchIdentifierPattern(identifier: string): RegExp {
+  // Match the identifier when it's:
+  // 1. At the start of the string and followed by a dot or end of string
+  // 2. Preceded by a dot and followed by a dot or end of string
+  return new RegExp(`(^${identifier}(\\.|$)|\\.${identifier}(\\.|$))`);
+}
+
+/**
+ * Creates a regex pattern that matches strings starting with any of the patch identifiers
+ * followed by a dot.
+ */
+const STARTS_WITH_PATCH_PATTERN = new RegExp(`^(${PATCH_IDENTIFIERS.join('|')})\\.`);
+
+/**
+ * Precompiled regex patterns for each patch identifier
+ */
+const PATCH_PATTERNS = PATCH_IDENTIFIERS.map(createPatchIdentifierPattern);
+
+/**
+ * Precompiled regex patterns for checking if a string starts with a specific patch identifier
+ */
+const PATCH_START_PATTERNS = PATCH_IDENTIFIERS.map(id => ({ 
+  id, 
+  pattern: new RegExp(`^${id}\\.`) 
+}));
+
+/**
  * Custom semver comparison that handles build tags in a special way.
  *
  * Normal semver comparison is performed first. If versions are equal, then build tags are compared.
@@ -56,8 +89,8 @@ export function customSemverCompare(
   const buildTag2 = parsed2.build.length ? parsed2.build.join(".") : "";
 
   // Check if either build tag contains a patch identifier
-  const hasPatch1 = PATCH_IDENTIFIERS.some(identifier => buildTag1.includes(identifier));
-  const hasPatch2 = PATCH_IDENTIFIERS.some(identifier => buildTag2.includes(identifier));
+  const hasPatch1 = PATCH_PATTERNS.some(pattern => pattern.test(buildTag1));
+  const hasPatch2 = PATCH_PATTERNS.some(pattern => pattern.test(buildTag2));
 
   // If neither has a patch build tag, use standard semver comparison
   if (!hasPatch1 && !hasPatch2) {
@@ -78,13 +111,13 @@ export function customSemverCompare(
   }
 
   // Check if build tags start with any of the patch identifiers
-  const isPatch1 = PATCH_IDENTIFIERS.some(id => buildTag1.startsWith(`${id}.`));
-  const isPatch2 = PATCH_IDENTIFIERS.some(id => buildTag2.startsWith(`${id}.`));
+  const isPatch1 = STARTS_WITH_PATCH_PATTERN.test(buildTag1);
+  const isPatch2 = STARTS_WITH_PATCH_PATTERN.test(buildTag2);
   
   // Get the identifier part if it exists
   const getIdentifier = (buildTag: string): string | null => {
-    for (const id of PATCH_IDENTIFIERS) {
-      if (buildTag.startsWith(`${id}.`)) {
+    for (const { id, pattern } of PATCH_START_PATTERNS) {
+      if (pattern.test(buildTag)) {
         return id;
       }
     }
@@ -106,12 +139,21 @@ export function customSemverCompare(
     
     // If different identifiers, compare them lexicographically
     if (id1 !== id2) {
-      return id1!.localeCompare(id2!);
+      // Safely handle the case where either identifier could be null
+      // This shouldn't happen due to isPatch1/isPatch2 checks, but we're being cautious
+      if (id1 === null) return -1;
+      if (id2 === null) return 1;
+      return id1.localeCompare(id2);
     }
     
-    // We know id1 is not null because isPatch1 is true
-    const patchVersionA = getVersionPart(buildTag1, id1!);
-    const patchVersionB = getVersionPart(buildTag2, id2!);
+    // Make sure id1 is not null before using it
+    if (id1 === null) {
+      // This shouldn't happen because isPatch1 is true, but just in case
+      return buildTag1.localeCompare(buildTag2);
+    }
+    
+    const patchVersionA = getVersionPart(buildTag1, id1);
+    const patchVersionB = getVersionPart(buildTag2, id1); // Using id1 as we know id1 === id2
 
     // Normalize version numbers by adding trailing zeros if needed
     // Count the number of parts in each version
