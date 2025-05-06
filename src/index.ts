@@ -10,4 +10,4 @@ export {
   gte,
   lte,
   valid
-} from './utils/custom-semver'; 
+} from './utils/custom-semver.js'; 
