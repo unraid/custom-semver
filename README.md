@@ -89,3 +89,9 @@ customSemverCompare('7.0.0+alpha', '7.0.0+beta'); // 0
 ## License
 
 MIT
+
+## Code Coverage
+
+[![codecov](https://codecov.io/gh/unraid/custom-semver/branch/main/graph/badge.svg)](https://codecov.io/gh/unraid/custom-semver)
+
+This project uses [Codecov](https://codecov.io/) for code coverage reporting. The badge above shows the current test coverage status.
