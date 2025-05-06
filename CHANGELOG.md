@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/unraid/custom-semver/compare/v1.2.0...v1.2.1) (2025-05-06)
+
+
+### Bug Fixes
+
+* ESM export incorrect ([b3029fc](https://github.com/unraid/custom-semver/commit/b3029fcc55aba6f15d2fbec0651de205c310a5eb))
+
 ## [1.2.0](https://github.com/unraid/custom-semver/compare/v1.1.0...v1.2.0) (2025-05-05)
 
 
