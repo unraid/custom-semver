@@ -27,7 +27,7 @@ jobs:
     needs: [release-please]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
